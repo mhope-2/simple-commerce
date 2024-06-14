@@ -3,7 +3,7 @@ Simple commerce simulates placing an order, saving the order to the database and
 
 ### API Docs
 [x] User Service: `http://localhost:8081/docs`  
-[x] Product Service: `http://localhost:8081/docs`  
+[x] Product Service: `http://localhost:8082/docs`  
 [x] Order Service: `http://localhost:8083/docs` 
 
 ### Order Request Sample

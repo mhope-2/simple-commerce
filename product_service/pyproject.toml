@@ -40,6 +40,12 @@ convention = "numpy"
 max-complexity = 5
 
 ################### Commands #####################
-#$ ruff check .                                  # check for errors
-#$ ruff check --fix .                            # check and fix fixable
-#$ ruff check --select [rule] --add-noqa .       # add a noqa to ignore certain errors
+# The Ruff Linter
+# ruff check .                                  # check for errors
+# ruff check --fix .                            # check and fix fixable
+# ruff check --select [rule] --add-noqa .       # add a noqa to ignore certain errors
+
+# The Ruff Formatter
+# ruff format                   # Format all files in the current directory.
+# ruff format path/to/code/     # Format all files in `path/to/code` (and any subdirectories).
+# ruff format path/to/file.py   # Format a single file.

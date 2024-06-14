@@ -1,0 +1,45 @@
+[tool.ruff]
+# Set the Line Length
+line-length = 120
+
+fix = false                  # Auto fix fixable  - disabled
+
+exclude = [
+    "env",
+    ".venv",
+    ".idea",
+    ".vscode",
+    "migrations",
+    "tests",
+    "*/__init__.py",
+]
+
+# Select rules to follow
+lint.select = [
+    "E",                    # pycodestyle (Syntax errors)
+    "F",                    # pyflakes
+    'I',                    # isort (Unsorted Imports/ Missing imports)
+    'N',                    # pep8-naming convention
+    'A',                    # builtins shadowing
+    'DJ',                   # Django rules (e.g. models must define __str__ method)
+    #'D',                   # pydocstyle (Docstrings on Classes and Functions) disabled
+]
+
+# Select rules to ignore
+lint.ignore =[
+    "DJ001",                # Ignore using null=True on charfields
+    "DJ006",                # Using exclude=[] instead of fields=[]
+]
+
+[tool.ruff.lint.pydocstyle]
+# Use Numpy-style docstrings.
+convention = "numpy"
+
+[tool.ruff.lint.mccabe]
+# Flag errors (`C901`) whenever the complexity level exceeds 5.
+max-complexity = 5
+
+################### Commands #####################
+#$ ruff check .                                  # check for errors
+#$ ruff check --fix .                            # check and fix fixable
+#$ ruff check --select [rule] --add-noqa .       # add a noqa to ignore certain errors

@@ -22,7 +22,9 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def on_startup():
+    # load env variables
     load_dotenv()
+    # connect to db and create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

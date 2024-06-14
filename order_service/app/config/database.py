@@ -10,9 +10,7 @@ DATABASE_URL = f"postgresql+asyncpg://{os.getenv('DB_USER')}:{os.getenv('DB_PASS
 engine = create_async_engine(DATABASE_URL, echo=True)
 
 # Create a configured "Session" class
-async_session = async_sessionmaker(
-    engine
-)
+async_session = async_sessionmaker(engine)
 
 # Base class for models
 Base = declarative_base()

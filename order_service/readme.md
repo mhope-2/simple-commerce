@@ -1,4 +1,4 @@
-### Useful Kafka Shell Commands
+### Useful Timescale DB Commands
 
 1. Enter TimescaleDB shell:
 ```bash

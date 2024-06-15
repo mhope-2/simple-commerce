@@ -31,36 +31,36 @@ class ProductService:
 
         async with httpx.AsyncClient() as client:
             try:
-                async with client.get(f"{product_service_url}/{code}") as response:
-                    if response.status_code == status.HTTP_200_OK:
-                        data = response.json()
-                        return Product(**data)
+                response = await client.get(f"{product_service_url}/{code}/") # returns a 307 without trailing backslash
+                if response.status_code == status.HTTP_200_OK:
+                    data = response.json()
+                    return Product(**data)
 
-                    elif response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        raise HTTPException(
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail="Product service returned a server error",
-                        )
+                elif response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Product service returned a server error",
+                    )
 
-                    elif response.status_code == status.HTTP_404_NOT_FOUND:
-                        raise HTTPException(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail="Product service returned 404",
-                        )
+                elif response.status_code == status.HTTP_404_NOT_FOUND:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Product service returned 404",
+                    )
 
-                    else:
-                        raise HTTPException(
-                            status_code=response.status_code,
-                            detail=f"Received non-200 status code from Product Service: {response.status_code}",
-                        )
+                else:
+                    raise HTTPException(
+                        status_code=response.status_code,
+                        detail=f"Received non-200 status code from Product Service: {response.status_code}",
+                    )
 
-            except httpx.TimeoutException:
+            except httpx.HTTPError:
                 raise HTTPException(
                     status_code=status.HTTP_408_REQUEST_TIMEOUT,
                     detail="Request to product service timed out"
                 )
 
-            except httpx.RequestException as e:
+            except httpx.RequestError as e:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Request to product service failed: {str(e)}"

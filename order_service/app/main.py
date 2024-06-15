@@ -26,6 +26,8 @@ async def on_startup():
     load_dotenv()
     # connect to db and create tables
     async with engine.begin() as conn:
+        # TODO: update to use a migration instead
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
 

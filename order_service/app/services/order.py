@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -19,21 +20,40 @@ async def fetch_order_record(id: str, session: AsyncSession):
 
 
 async def create_order_record(data: CreateOrder, session: AsyncSession):
-    async with session.begin():
-        try:
-            user = await UserService.fetch_user(data.user_id)
-            product = await ProductService.fetch_product(data.product_code)
+    try:
+        user = await UserService.fetch_user(data.user_id)
+        product = await ProductService.fetch_product(data.product_code)
 
-            if user and product:
-                order = Order(user_id=user.id, product_id=product.id)
-                session.add(order)
+        if user and product:
+            total_price = product.price * data.quantity
 
-                try:
-                    await session.commit()
-                    await session.refresh(order)
-                except Exception as e:
-                    await session.rollback()
-                    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+            order = Order(
+                user_id=user.id,
+                product_code=product.code,
+                product_name=product.name,
+                customer_full_name=f"{user.first_name} {user.last_name}",
+                quantity=data.quantity,
+                total_amount=total_price,
+            )
+            session.add(order)
+            await session.commit()
+            await session.refresh(order)
 
-        except HTTPException as e:
-            raise e
+            # TODO: CALL BG func to push order to RabbitMQ
+
+            return order
+
+    except HTTPException as e:
+        print(str(e))
+        raise e
+
+    except SQLAlchemyError as e:
+        print(str(e))
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving order")
+
+    except Exception as e:
+        print(str(e))
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving order")
+

@@ -6,7 +6,7 @@ Simple commerce simulates placing an order, saving the order to the database and
 [x] Product Service: `http://localhost:8082/docs`  
 [x] Order Service: `http://localhost:8083/docs` 
 
-### Order Request Sample
+### Order Service POST Request Sample
 ```json
 {
   "user_id": "7c11e1ce2741",

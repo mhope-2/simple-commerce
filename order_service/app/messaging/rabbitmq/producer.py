@@ -1,10 +1,12 @@
 import logging
+import os
+
 import pika
 
 logger = logging.getLogger(__name__)
 
 
-class Publisher(object):
+class Producer(object):
     def __init__(self, host, exchange, exchange_type, routing_key):
         self.host = host
         self.exchange = exchange
@@ -12,7 +14,7 @@ class Publisher(object):
         self.routing_key = routing_key or ""
 
     def connection(self):
-        credentials = pika.PlainCredentials("rabbit", "rabbit")
+        credentials = pika.PlainCredentials(os.getenv("RABBITMQ_DEFAULT_USER"), os.getenv("RABBITMQ_DEFAULT_PASS"))
         return pika.BlockingConnection(
             pika.ConnectionParameters(host=self.host, credentials=credentials)
         )
@@ -27,11 +29,13 @@ class Publisher(object):
         self.connection().close()
 
     def publish(self, message):
-        # declare exchange
+        log_msg = f"Published message to {self.exchange}; msg={message}"
+
         self.exchange_declare()
 
         self.channel().basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=message)
-        log_msg = f"Published message to {self.exchange}; msg={message}"
+
         logger.info(log_msg)
         print(log_msg)
+
         self.close_connection()

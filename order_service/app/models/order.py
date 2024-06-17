@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import TIMESTAMP, Column, DateTime, Float, Integer, String, func
+from sqlalchemy import TIMESTAMP, Column, Float, Integer, String, func
 
 from app.config.database import Base
 

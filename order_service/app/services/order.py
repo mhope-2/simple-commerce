@@ -3,19 +3,17 @@ import logging
 import os
 from datetime import datetime, timezone
 
-from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
 
 from app.client.product import ProductService
 from app.client.user import UserService
 from app.messaging.rabbitmq.publisher import Publisher
 from app.models.order import Order
 from app.schemas.order import CreateOrder
-
-from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
-
 
 logger = logging.getLogger(__name__)
 

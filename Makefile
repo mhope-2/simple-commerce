@@ -18,5 +18,3 @@ start:
 stop:
 	docker-compose stop
 
-#lint:
-#	black

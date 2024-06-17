@@ -33,7 +33,7 @@ services:
     env_file: ./order_service/.env
     depends_on:
       - timescaledb
-#      - rabbitmq
+      - rabbitmq
 
   timescaledb:
     image: timescale/timescaledb:latest-pg12
@@ -49,18 +49,18 @@ services:
       - timescale_data:/var/lib/postgresql/data
     networks:
       - comm-net
-#
-#  rabbitmq:
-#    image: rabbitmq:3.7.15-management-alpine
-#    container_name: rabbitmq
-#    environment:
-#      - RABBITMQ_DEFAULT_USER=user
-#      - RABBITMQ_DEFAULT_PASS=order
-#    ports:
-#      - "5672:5672"
-#      - "15672:15672"
-#    networks:
-#      - comm-net
+
+  rabbitmq:
+    image: rabbitmq:3.7.15-management-alpine
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - comm-net
 
 volumes:
   timescale_data:

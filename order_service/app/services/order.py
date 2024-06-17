@@ -49,43 +49,45 @@ async def create_order_record(data: CreateOrder, background_tasks, session: Asyn
         user = await UserService.fetch_user(data.user_id)
         product = await ProductService.fetch_product(data.product_code)
 
-        if user and product:
-            total_price = product.price * data.quantity
+        if not user and product:
+            return
 
-            order = Order(
-                user_id=user.id,
-                product_code=product.code,
-                product_name=product.name,
-                customer_full_name=f"{user.first_name} {user.last_name}",
-                quantity=data.quantity,
-                total_amount=total_price,
-            )
-            session.add(order)
-            await session.commit()
-            await session.refresh(order)
+        total_price = product.price * data.quantity
 
-            order_payload = dict(
-                order_id=order.id,
-                customer_full_name=order.customer_full_name,
-                product_name=order.product_name,
-                total_amount=order.total_amount,
-                created_at=order.created_at.isoformat(), # convert to ISO format for JSON serialization
-            )
+        order = Order(
+            user_id=user.id,
+            product_code=product.code,
+            product_name=product.name,
+            customer_full_name=f"{user.first_name} {user.last_name}",
+            quantity=data.quantity,
+            total_amount=total_price,
+        )
+        session.add(order)
+        await session.commit()
+        await session.refresh(order)
 
-            message = {
-                "producer": "order_service",
-                "sent_at": datetime.now(timezone.utc).isoformat(), # convert to ISO format for JSON serialization
-                "type": "created_order",
-                "payload": {
-                    "order": order_payload,
-                },
-            }
+        order_payload = dict(
+            order_id=order.id,
+            customer_full_name=order.customer_full_name,
+            product_name=order.product_name,
+            total_amount=order.total_amount,
+            created_at=order.created_at.isoformat(), # convert to ISO format for JSON serialization
+        )
 
-            # invoke background task to publish message
-            #https://fastapi.tiangolo.com/tutorial/background-tasks/
-            background_tasks.add_task(publish_message, message=message)
+        message = {
+            "producer": "order_service",
+            "sent_at": datetime.now(timezone.utc).isoformat(), # convert to ISO format for JSON serialization
+            "type": "created_order",
+            "payload": {
+                "order": order_payload,
+            },
+        }
 
-            return order
+        # invoke background task to publish message
+        #https://fastapi.tiangolo.com/tutorial/background-tasks/
+        background_tasks.add_task(publish_message, message=message)
+
+        return order
 
     except HTTPException as e:
         print("Error: ", e)
@@ -96,11 +98,11 @@ async def create_order_record(data: CreateOrder, background_tasks, session: Asyn
         print("Error: ", e)
         logger.error(str(e))
         await session.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error saving order; msg={e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving order")
 
     except Exception as e:
         print("Error: ", e)
         logger.error(str(e))
         await session.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Exception occurred; msg={e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Exception occurred")
 

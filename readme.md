@@ -10,7 +10,8 @@ Simple commerce simulates placing an order, saving the order to the database and
 ```json
 {
   "user_id": "7c11e1ce2741",
-  "product_code": "product1"
+  "product_code": "product1",
+  "quantity": 2
 }
 ```
 

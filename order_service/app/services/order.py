@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
@@ -11,7 +10,8 @@ from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
 
 from app.client.product import ProductService
 from app.client.user import UserService
-from app.messaging.rabbitmq.publisher import Publisher
+from app.config.settings import settings
+from app.messaging.rabbitmq.producer import Producer
 from app.models.order import Order
 from app.schemas.order import CreateOrder
 
@@ -35,13 +35,13 @@ async def fetch_order_record(id: str, session: AsyncSession):
 def publish_message(message):
     json_message = json.dumps(message)
 
-    publisher = Publisher(
-        os.getenv("RABBITMQ_HOST"),
-        os.getenv("EXCHANGE"),
-        os.getenv("EXCHANGE_TYPE"),
-        os.getenv("ROUTING_KEY"),
+    producer = Producer(
+        settings.RABBITMQ_HOST,
+        settings.EXCHANGE,
+        settings.EXCHANGE_TYPE,
+        settings.ROUTING_KEY,
     )
-    publisher.publish(json_message)
+    producer.publish(json_message)
 
 
 async def create_order_record(data: CreateOrder, background_tasks, session: AsyncSession):
@@ -88,16 +88,19 @@ async def create_order_record(data: CreateOrder, background_tasks, session: Asyn
             return order
 
     except HTTPException as e:
+        print("Error: ", e)
         logger.error(str(e))
         raise e
 
     except SQLAlchemyError as e:
+        print("Error: ", e)
         logger.error(str(e))
         await session.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving order")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error saving order; msg={e}")
 
     except Exception as e:
+        print("Error: ", e)
         logger.error(str(e))
         await session.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving order")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Exception occurred; msg={e}")
 

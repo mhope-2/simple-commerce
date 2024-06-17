@@ -1,7 +1,8 @@
 import logging
-import os
 
 import pika
+
+from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class Producer(object):
         self.routing_key = routing_key or ""
 
     def connection(self):
-        credentials = pika.PlainCredentials(os.getenv("RABBITMQ_DEFAULT_USER"), os.getenv("RABBITMQ_DEFAULT_PASS"))
+        credentials = pika.PlainCredentials(settings.RABBITMQ_DEFAULT_USER, settings.RABBITMQ_DEFAULT_PASS)
         return pika.BlockingConnection(
             pika.ConnectionParameters(host=self.host, credentials=credentials)
         )

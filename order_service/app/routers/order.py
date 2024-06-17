@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config.database import get_session
@@ -14,5 +14,5 @@ async def retrieve_order(id: str, session: AsyncSession = Depends(get_session)):
 
 
 @order_router.post("/orders/")
-async def create_order(data: CreateOrder, session: AsyncSession = Depends(get_session)):
-    return await create_order_record(data, session)
+async def create_order(data: CreateOrder, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)):
+    return await create_order_record(data, background_tasks, session)

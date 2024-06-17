@@ -1,4 +1,4 @@
-### Useful Timescale DB Commands
+### Useful Timescale DB Shell Commands
 
 1. Enter TimescaleDB shell:
 ```bash
@@ -21,4 +21,11 @@ E.g.
 3. List tables:
 ```bash
 \dt
+```
+
+### Useful RabbitMQ Shell Commands
+
+1. List Exchanges:
+```bash
+rabbitmqctl list_exchanges
 ```

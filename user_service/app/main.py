@@ -9,8 +9,9 @@ app = FastAPI(title="User Service")
 toggle_status_code = False
 lock = threading.Lock()
 
+
 @app.get("/users/{id}/")
-async def retrieve(id: str):
+async def retrieve_user_by_id(id: str):
     """
     Returns a user by id
     :return:
@@ -24,8 +25,7 @@ async def retrieve(id: str):
         time.sleep(0.3)
 
         return JSONResponse(
-            status_code=200,
-            content={"id": "7c11e1ce2741", "first_name": "John", "last_name": "Doe"}
+            status_code=status.HTTP_200_OK, content={"id": "7c11e1ce2741", "first_name": "John", "last_name": "Doe"}
         )
 
     elif id == "e6f24d7d1c7e":
@@ -33,9 +33,7 @@ async def retrieve(id: str):
 
         with lock:
             if toggle_status_code:
-                response = JSONResponse(
-                    content={"id": "e6f24d7d1c7e", "first_name": "Jane", "last_name": "Doe"}
-                )
+                response = JSONResponse(content={"id": "e6f24d7d1c7e", "first_name": "Jane", "last_name": "Doe"})
             else:
                 response = HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error"
@@ -50,5 +48,3 @@ async def retrieve(id: str):
 
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-

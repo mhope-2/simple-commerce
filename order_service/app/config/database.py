@@ -11,7 +11,7 @@ DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASS}@{set
 engine = create_async_engine(DATABASE_URL, echo=True)
 
 # Create a configured "Session" class
-async_session = async_sessionmaker(engine)
+session_maker = async_sessionmaker(engine)
 
 # Base class for models
 Base = declarative_base()
@@ -22,5 +22,5 @@ database = Database(DATABASE_URL)
 
 # Dependency to get the database session
 async def get_session() -> AsyncSession:
-    async with async_session() as session:
+    async with session_maker() as session:
         yield session

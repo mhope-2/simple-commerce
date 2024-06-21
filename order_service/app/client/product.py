@@ -1,4 +1,4 @@
-import os
+from app.config.settings import settings
 from dataclasses import dataclass
 from typing import Optional
 
@@ -27,7 +27,7 @@ class ProductService:
         wait=wait_fixed(2)  # wait 2 seconds between retries
     )
     async def fetch_product(code: str) -> Optional[Product]:
-        product_service_url = os.getenv("PRODUCT_SERVICE_URL")
+        product_service_url = settings.PRODUCT_SERVICE_URL
 
         async with httpx.AsyncClient() as client:
             try:

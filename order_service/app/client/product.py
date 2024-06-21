@@ -32,6 +32,7 @@ class ProductService:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(f"{product_service_url}/{code}/") # returns a 307 without trailing backslash
+
                 if response.status_code == status.HTTP_200_OK:
                     data = response.json()
                     return Product(**data)

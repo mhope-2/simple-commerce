@@ -1,8 +1,8 @@
-import json
 import logging
 from datetime import datetime, timezone
+from typing import Optional
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -13,12 +13,12 @@ from app.client.user import UserService
 from app.config.settings import settings
 from app.messaging.rabbitmq.producer import Producer
 from app.models.order import Order
-from app.schemas.order import CreateOrder
+from app.schemas.order import CreateOrder, OrderMessage, OrderMessagePayload, OrderPayload
 
 logger = logging.getLogger(__name__)
 
 
-async def fetch_order_record(id: str, session: AsyncSession):
+async def fetch_order_record(id: str, session: AsyncSession) -> Order:
     async with session.begin():
         result = await session.execute(select(Order).where(Order.id == id))
         order = result.scalars().first()
@@ -32,8 +32,8 @@ async def fetch_order_record(id: str, session: AsyncSession):
     stop=(stop_after_attempt(3) | stop_after_delay(5)),  # stop after 3 attempts or 5 seconds
     wait=wait_fixed(2)  # wait 2 seconds between retries
 )
-def publish_message(message):
-    json_message = json.dumps(message)
+def publish_message(message: OrderMessage) -> None:
+    json_message = message.model_dump_json()
 
     producer = Producer(
         settings.RABBITMQ_HOST,
@@ -44,21 +44,23 @@ def publish_message(message):
     producer.publish(json_message)
 
 
-async def create_order_record(data: CreateOrder, background_tasks, session: AsyncSession):
+async def create_order_record(
+    data: CreateOrder, background_tasks: BackgroundTasks, session: AsyncSession
+) -> Optional[Order]:
     try:
         user = await UserService.fetch_user(data.user_id)
         product = await ProductService.fetch_product(data.product_code)
 
         if not user and product:
-            return
+            return None
 
-        total_price = product.price * data.quantity
+        total_price = product.price * data.quantity  # type: ignore[union-attr]
 
         order = Order(
-            user_id=user.id,
-            product_code=product.code,
-            product_name=product.name,
-            customer_full_name=f"{user.first_name} {user.last_name}",
+            user_id=user.id,  # type: ignore[union-attr]
+            product_code=product.code,  # type: ignore[union-attr]
+            product_name=product.name,  # type: ignore[union-attr]
+            customer_full_name=f"{user.first_name} {user.last_name}",  # type: ignore[union-attr]
             quantity=data.quantity,
             total_amount=total_price,
         )
@@ -66,25 +68,21 @@ async def create_order_record(data: CreateOrder, background_tasks, session: Asyn
         await session.commit()
         await session.refresh(order)
 
-        order_payload = dict(
+        order_payload = OrderPayload(
             order_id=order.id,
             customer_full_name=order.customer_full_name,
             product_name=order.product_name,
             total_amount=order.total_amount,
-            created_at=order.created_at.isoformat(), # convert to ISO format for JSON serialization
+            created_at=order.created_at.isoformat(),
         )
 
-        message = {
-            "producer": "order_service",
-            "sent_at": datetime.now(timezone.utc).isoformat(), # convert to ISO format for JSON serialization
-            "type": "created_order",
-            "payload": {
-                "order": order_payload,
-            },
-        }
+        message = OrderMessage(
+            producer="order_service",
+            sent_at=datetime.now(timezone.utc).isoformat(),
+            type="created_order",
+            payload=OrderMessagePayload(order=order_payload),
+        )
 
-        # invoke background task to publish message
-        #https://fastapi.tiangolo.com/tutorial/background-tasks/
         background_tasks.add_task(publish_message, message=message)
 
         return order
@@ -105,4 +103,3 @@ async def create_order_record(data: CreateOrder, background_tasks, session: Asyn
         logger.error(str(e))
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Exception occurred")
-

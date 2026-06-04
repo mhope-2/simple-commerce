@@ -1,16 +1,14 @@
-import os
-from dataclasses import dataclass
 from typing import Optional
 
 import httpx
 from fastapi import HTTPException, status
+from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
 
+from app.config.settings import settings
 
-@dataclass
-class User:
-    """Class to represent a User object"""
 
+class User(BaseModel):
     id: str
     first_name: str
     last_name: str
@@ -25,7 +23,7 @@ class UserService:
         wait=wait_fixed(2)  # wait 2 seconds between retries
     )
     async def fetch_user(id: str) -> Optional[User]:
-        user_service_url = os.getenv("USER_SERVICE_URL")
+        user_service_url = settings.USER_SERVICE_URL
 
         async with httpx.AsyncClient() as client:
             try:

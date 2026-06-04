@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config.database import Base, engine
 from app.routers.order import order_router
 
-app = FastAPI()
+app = FastAPI(title="Order Service")
 
 # Create all tables
 # Base.metadata.create_all(bind=engine)
@@ -21,7 +21,7 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-async def on_startup():
+async def on_startup() -> None:
     # load env variables
     load_dotenv()
     # connect to db and create tables

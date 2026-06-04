@@ -40,6 +40,13 @@ convention = "numpy"
 # Flag errors (`C901`) whenever the complexity level exceeds 5.
 max-complexity = 5
 
+[tool.mypy]
+python_version = "3.9"
+disallow_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+exclude = ["env/", "tests/"]
+
 ################### Commands #####################
 # The Ruff Linter
 # ruff check .                                  # check for errors

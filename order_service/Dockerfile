@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # copy files
 ADD . /app/
 
-EXPOSE 8082
+EXPOSE 8083
 
 RUN export PYTHONPATH=.
 

@@ -1,16 +1,14 @@
-from app.config.settings import settings
-from dataclasses import dataclass
 from typing import Optional
 
 import httpx
 from fastapi import HTTPException, status
+from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
 
+from app.config.settings import settings
 
-@dataclass
-class Product:
-    """Class to represent a Product object"""
 
+class Product(BaseModel):
     code: str
     name: str
     price: float

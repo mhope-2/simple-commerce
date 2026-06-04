@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   user-service:
     build:
@@ -10,6 +8,13 @@ services:
       - "8081:8081"
     networks:
       - comm-net
+    develop:
+      watch:
+        - action: sync
+          path: ./user_service/app
+          target: /app/app
+        - action: rebuild
+          path: ./user_service/requirements.txt
 
   product-service:
     build:
@@ -20,6 +25,13 @@ services:
       - "8082:8082"
     networks:
       - comm-net
+    develop:
+      watch:
+        - action: sync
+          path: ./product_service/app
+          target: /app/app
+        - action: rebuild
+          path: ./product_service/requirements.txt
 
   order-service:
     build:
@@ -34,6 +46,13 @@ services:
     depends_on:
       - timescaledb
       - rabbitmq
+    develop:
+      watch:
+        - action: sync
+          path: ./order_service/app
+          target: /app/app
+        - action: rebuild
+          path: ./order_service/requirements.txt
 
   timescaledb:
     image: timescale/timescaledb:latest-pg12

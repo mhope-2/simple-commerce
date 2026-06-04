@@ -11,7 +11,7 @@ lock = threading.Lock()
 
 
 @app.get("/users/{id}/")
-async def retrieve_user_by_id(id: str):
+async def retrieve_user_by_id(id: str) -> JSONResponse:
     """
     Returns a user by id
     :return:

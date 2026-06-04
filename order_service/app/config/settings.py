@@ -1,29 +1,24 @@
-import os
-
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DB_USER: str = os.getenv("DB_USER")
-    DB_PASS: str = os.getenv("DB_PASS")
-    DB_HOST: str = os.getenv("DB_HOST")
-    DB_NAME: str = os.getenv("DB_NAME")
+    model_config = SettingsConfigDict(env_file=".env")
 
-    AMQP_URI: str = os.getenv("AMQP_URI")
-    RABBITMQ_HOST: str = os.getenv("RABBITMQ_HOST")
-    EXCHANGE: str = os.getenv("EXCHANGE")
-    EXCHANGE_TYPE: str = os.getenv("EXCHANGE_TYPE")
-    ROUTING_KEY: str = os.getenv("ROUTING_KEY")
-    RABBITMQ_DEFAULT_USER: str = os.getenv("RABBITMQ_DEFAULT_USER")
-    RABBITMQ_DEFAULT_PASS: str = os.getenv("RABBITMQ_DEFAULT_PASS")
+    DB_USER: str
+    DB_PASS: str
+    DB_HOST: str
+    DB_NAME: str
 
-    USER_SERVICE_URL: str = os.getenv("USER_SERVICE_URL")
-    PRODUCT_SERVICE_URL: str = os.getenv("PRODUCT_SERVICE_URL")
+    AMQP_URI: str
+    RABBITMQ_HOST: str
+    EXCHANGE: str
+    EXCHANGE_TYPE: str
+    ROUTING_KEY: str
+    RABBITMQ_DEFAULT_USER: str
+    RABBITMQ_DEFAULT_PASS: str
 
-    # SECRET_KEY: str = os.getenv("SECRET_KEY")
-
-    class Config:
-        env_file = ".env"
+    USER_SERVICE_URL: str
+    PRODUCT_SERVICE_URL: str
 
 
 settings = Settings()

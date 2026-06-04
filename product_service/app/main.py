@@ -7,7 +7,7 @@ app = FastAPI(title="Product Service")
 
 
 @app.get("/products/{code}/")
-async def retrieve(code: str):
+async def retrieve(code: str) -> JSONResponse:
     """
     Returns a product by code
     :return:

@@ -38,6 +38,5 @@ class Producer:
         self.channel().basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=message)
 
         logger.info(log_msg)
-        print(log_msg)
 
         self.close_connection()

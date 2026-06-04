@@ -1,6 +1,51 @@
 import pytest
 
 
+@pytest.mark.asyncio
+async def test_retrieve_order(test_client, mock_fetch_user, mock_fetch_product, mock_publish_message):
+    # Create an order first so we have a valid ID to retrieve
+    create_res = test_client.post("/orders/", json={
+        "user_id": "7c11e1ce2741",
+        "product_code": "product1",
+        "quantity": 1,
+    })
+    assert create_res.status_code == 200
+    order_id = create_res.json()["id"]
+
+    res = test_client.get(f"/orders/{order_id}/")
+    assert res.status_code == 200
+    assert res.json()["id"] == order_id
+    assert res.json()["user_id"] == "7c11e1ce2741"
+    assert res.json()["product_code"] == "product1"
+
+
+@pytest.mark.asyncio
+async def test_retrieve_order_not_found(test_client):
+    res = test_client.get("/orders/nonexistent-id/")
+    assert res.status_code == 404
+    assert res.json() == {"detail": "Order not found"}
+
+
+@pytest.mark.asyncio
+async def test_create_order_user_not_found(test_client, mock_fetch_user_not_found):
+    res = test_client.post("/orders/", json={
+        "user_id": "unknown-user",
+        "product_code": "product1",
+        "quantity": 1,
+    })
+    assert res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_order_product_not_found(test_client, mock_fetch_user, mock_fetch_product_not_found):
+    res = test_client.post("/orders/", json={
+        "user_id": "7c11e1ce2741",
+        "product_code": "unknown-product",
+        "quantity": 1,
+    })
+    assert res.status_code == 404
+
+
 @pytest.mark.parametrize(
     "req_data, status_code, res_data",
     [

@@ -1,8 +1,8 @@
-import os
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 
 from app.main import app
 from app.client.user import User
@@ -60,5 +60,23 @@ def mock_fetch_product():
 
 @pytest.fixture
 def mock_publish_message():
-    with patch("app.services.order.publish_message", AsyncMock(return_value=None)) as mocked:
+    with patch("app.services.order.publish_message", MagicMock(return_value=None)) as mocked:
+        yield mocked
+
+
+@pytest.fixture
+def mock_fetch_user_not_found():
+    with patch(
+        "app.client.user.UserService.fetch_user",
+        AsyncMock(side_effect=HTTPException(status_code=404, detail="User service returned a 404")),
+    ) as mocked:
+        yield mocked
+
+
+@pytest.fixture
+def mock_fetch_product_not_found():
+    with patch(
+        "app.client.product.ProductService.fetch_product",
+        AsyncMock(side_effect=HTTPException(status_code=404, detail="Product service returned 404")),
+    ) as mocked:
         yield mocked

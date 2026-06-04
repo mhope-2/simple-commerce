@@ -1,7 +1,5 @@
 import logging
 from datetime import datetime, timezone
-from typing import Optional
-
 from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +44,7 @@ def publish_message(message: OrderMessage) -> None:
 
 async def create_order_record(
     data: CreateOrder, background_tasks: BackgroundTasks, session: AsyncSession
-) -> Optional[Order]:
+) -> Order | None:
     try:
         user = await UserService.fetch_user(data.user_id)
         product = await ProductService.fetch_product(data.product_code)
@@ -88,18 +86,15 @@ async def create_order_record(
         return order
 
     except HTTPException as e:
-        print("Error: ", e)
         logger.error(str(e))
         raise e
 
     except SQLAlchemyError as e:
-        print("Error: ", e)
-        logger.error(str(e))
+        logger.error("Failed to save order", exc_info=True)
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error saving order")
 
     except Exception as e:
-        print("Error: ", e)
-        logger.error(str(e))
+        logger.exception("Unexpected error in create_order_record")
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Exception occurred")

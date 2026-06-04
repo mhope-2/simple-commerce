@@ -4,6 +4,7 @@ import pytest
 @pytest.mark.parametrize("id, status_code, res_data", [
     ("product1", 200, {"code": "product1", "name": "Product 1", "price": 9.99}),
     ("productX", 404, {"detail": "Product not found"}),
+    ("product3", 500, {"detail": "Internal Server Error"}),
 ])
 @pytest.mark.asyncio
 async def test_retrieve_product(client, id, status_code, res_data):

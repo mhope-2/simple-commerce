@@ -1,5 +1,3 @@
-from typing import Optional
-
 import httpx
 from fastapi import HTTPException, status
 from pydantic import BaseModel
@@ -24,7 +22,7 @@ class ProductService:
         stop=(stop_after_attempt(3) | stop_after_delay(5)),  # stop after 3 attempts or 5 seconds
         wait=wait_fixed(2)  # wait 2 seconds between retries
     )
-    async def fetch_product(code: str) -> Optional[Product]:
+    async def fetch_product(code: str) -> Product | None:
         product_service_url = settings.PRODUCT_SERVICE_URL
 
         async with httpx.AsyncClient() as client:

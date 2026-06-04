@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,5 +17,5 @@ async def retrieve_order(id: str, session: AsyncSession = Depends(get_session)) 
 @order_router.post("/")
 async def create_order(
     data: CreateOrder, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)
-) -> Optional[Order]:
+) -> Order | None:
     return await create_order_record(data, background_tasks, session)

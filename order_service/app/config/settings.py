@@ -20,5 +20,7 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str
     PRODUCT_SERVICE_URL: str
 
+    SENTRY_DSN: str | None = None
+
 
 settings = Settings()

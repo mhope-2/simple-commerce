@@ -24,4 +24,3 @@ async def test_retrieve_user_by_id_toggle(client, toggle, status_code, response)
     res = client.get(f"/users/e6f24d7d1c7e/")
     assert res.status_code == status_code
     assert res.json() == response
-

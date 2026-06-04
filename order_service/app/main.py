@@ -1,11 +1,29 @@
+import sentry_sdk
 from dotenv import load_dotenv
+
+from app.config.logging_config import setup_logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 
-from app.config.database import Base, engine
+from app.config.database import Base
+from app.config.settings import settings
 from app.routers.order import order_router
 
+setup_logging()
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[StarletteIntegration(), FastApiIntegration()],
+    )
+
 app = FastAPI(title="Order Service")
+
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 # Create all tables
 # Base.metadata.create_all(bind=engine)
@@ -24,11 +42,6 @@ app.add_middleware(
 async def on_startup() -> None:
     # load env variables
     load_dotenv()
-    # connect to db and create tables
-    async with engine.begin() as conn:
-        # TODO: update to use a migration instead
-        # await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
 
 
 app.include_router(order_router)

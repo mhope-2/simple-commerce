@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.13-alpine
 
 WORKDIR /app
 
@@ -14,5 +14,7 @@ EXPOSE 8083
 
 RUN export PYTHONPATH=.
 
-# Startup command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh"]

@@ -41,7 +41,7 @@ convention = "numpy"
 max-complexity = 5
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.13"
 disallow_untyped_defs = true
 ignore_missing_imports = true
 warn_unused_ignores = true

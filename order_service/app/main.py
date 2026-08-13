@@ -23,7 +23,7 @@ if settings.SENTRY_DSN:
 
 app = FastAPI(title="Order Service")
 
-Instrumentator().instrument(app).expose(app, include_in_schema=False)
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 # Create all tables
 # Base.metadata.create_all(bind=engine)

@@ -44,8 +44,10 @@ services:
       - comm-net
     env_file: ./order_service/.env
     depends_on:
-      - timescaledb
-      - rabbitmq
+      timescaledb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     develop:
       watch:
         - action: sync
@@ -59,7 +61,7 @@ services:
     restart: always
     container_name: timescale-db
     ports:
-      - 5432:5432
+      - 5433:5432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -68,6 +70,12 @@ services:
       - timescale_data:/var/lib/postgresql/data
     networks:
       - comm-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   rabbitmq:
     image: rabbitmq:3.7.15-management-alpine

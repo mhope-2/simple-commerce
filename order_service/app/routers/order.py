@@ -14,7 +14,7 @@ async def retrieve_order(id: str, session: AsyncSession = Depends(get_session)) 
     return await fetch_order_record(id, session)
 
 
-@order_router.post("/")
+@order_router.post("/", response_model=RetrieveOrder | None)
 async def create_order(
     data: CreateOrder, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)
 ) -> Order | None:

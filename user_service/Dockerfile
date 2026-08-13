@@ -2,13 +2,13 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
-COPY ../requirements.txt /app/
+COPY requirements.txt /app/
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # copy files
-ADD .. /app/
+ADD . /app/
 
 EXPOSE 8081
 

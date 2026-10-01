@@ -2,6 +2,9 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
 scrape_configs:
   # Metrics from all services arrive at the OpenTelemetry Collector over OTLP and
   # are exposed here, labelled with service_name.

@@ -1,8 +1,10 @@
 import httpx
 from fastapi import HTTPException, status
 from pydantic import BaseModel
-from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
+from tenacity import retry, retry_if_exception, stop_after_attempt, stop_after_delay, wait_fixed
 
+from app.client.retry import is_retryable
+from app.config.metrics import count_retry
 from app.config.settings import settings
 
 
@@ -18,7 +20,10 @@ class UserService:
     @staticmethod
     @retry(
         stop=(stop_after_attempt(3) | stop_after_delay(5)),  # stop after 3 attempts or 5 seconds
-        wait=wait_fixed(2)  # wait 2 seconds between retries
+        wait=wait_fixed(2),  # wait 2 seconds between retries
+        before_sleep=count_retry("user-service"),
+        retry=retry_if_exception(is_retryable),
+        reraise=True,  # raise the last HTTPException (with its status), not tenacity's RetryError
     )
     async def fetch_user(id: str) -> User | None:
         user_service_url = settings.USER_SERVICE_URL

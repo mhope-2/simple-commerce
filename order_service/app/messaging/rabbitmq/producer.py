@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 import pika
 
@@ -21,22 +20,14 @@ class Producer:
             pika.ConnectionParameters(host=self.host, credentials=credentials)
         )
 
-    def channel(self) -> Any:
-        return self.connection().channel()
-
-    def exchange_declare(self) -> Any:
-        return self.channel().exchange_declare(exchange=self.exchange, exchange_type=self.exchange_type)
-
-    def close_connection(self) -> None:
-        self.connection().close()
-
     def publish(self, message: str) -> None:
-        log_msg = f"Published message to {self.exchange}; msg={message}"
+        # One connection and channel per publish, always closed afterwards.
+        connection = self.connection()
+        try:
+            channel = connection.channel()
+            channel.exchange_declare(exchange=self.exchange, exchange_type=self.exchange_type)
+            channel.basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=message)
+        finally:
+            connection.close()
 
-        self.exchange_declare()
-
-        self.channel().basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=message)
-
-        logger.info(log_msg)
-
-        self.close_connection()
+        logger.info("Published message to %s; msg=%s", self.exchange, message)

@@ -1,32 +1,27 @@
 import sentry_sdk
-from dotenv import load_dotenv
-
-from app.config.logging_config import setup_logging
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
-from app.config.database import Base
+from app.config.database import engine
+from app.config.logging_config import setup_logging
 from app.config.settings import settings
+from app.config.telemetry import TELEMETRY, instrument_libraries
 from app.routers.order import order_router
 
 setup_logging()
+instrument_libraries(engine)
 
 if settings.SENTRY_DSN:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
+        # Error tracking only: no traces_sample_rate, so Sentry tracing stays off and
+        # traces come from OpenTelemetry.
         integrations=[StarletteIntegration(), FastApiIntegration()],
     )
 
-app = FastAPI(title="Order Service")
-
-Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
-
-# Create all tables
-# Base.metadata.create_all(bind=engine)
+app = FastAPI(title="Order Service", telemetry=TELEMETRY)
 
 origins = ["*"]
 app.add_middleware(
@@ -36,12 +31,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-    # load env variables
-    load_dotenv()
 
 
 app.include_router(order_router)

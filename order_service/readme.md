@@ -16,7 +16,7 @@ SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project-id>
 docker-compose up order-service
 ```
 
-The SDK is initialised before the first request is served. Any unhandled exception — including failures in background tasks such as RabbitMQ publish retries — will appear in your Sentry dashboard within seconds.
+The SDK is initialised before the first request is served. Sentry is used for error tracking only; traces come from OpenTelemetry (see the main readme). Any unhandled exception — including failures in background tasks such as RabbitMQ publish retries — will appear in your Sentry dashboard within seconds.
 
 #### Disabling Sentry
 

@@ -8,9 +8,11 @@ from app.config.settings import settings
 
 DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}/{settings.DB_NAME}"
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=settings.DB_ECHO)
 
-session_maker = async_sessionmaker(engine)
+# Keep loaded attributes after commit: responses are serialized after the session's
+# transaction has ended, when lazy loading is no longer possible.
+session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 Base = declarative_base()
 

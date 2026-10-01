@@ -61,11 +61,6 @@ async def test_create_order_product_not_found(test_client, mock_fetch_user, mock
                 "total_amount": 19.98,
             },
         ),
-        (
-            {"user_id": "7c11e1ce2741", "product_code": "product3", "quantity": 2},
-            500,
-            {"detail": "Exception occurred"},
-        ),
     ],
 )
 @pytest.mark.asyncio
@@ -92,3 +87,14 @@ async def test_create_order(
     # Ensure the fetch_user and fetch_product functions were called
     mock_fetch_user.assert_called_once_with(req_data["user_id"])
     mock_fetch_product.assert_called_once_with(req_data["product_code"])
+
+
+@pytest.mark.asyncio
+async def test_create_order_unexpected_error(test_client, mock_fetch_user, mock_fetch_product_error):
+    res = test_client.post("/orders/", json={
+        "user_id": "7c11e1ce2741",
+        "product_code": "product3",
+        "quantity": 2,
+    })
+    assert res.status_code == 500
+    assert res.json() == {"detail": "Exception occurred"}

@@ -1,44 +1,34 @@
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.pool import NullPool
 from unittest.mock import patch, AsyncMock, MagicMock
 
 from app.main import app
 from app.client.user import User
 from app.client.product import Product
-from sqlalchemy.orm import declarative_base
 from app.config.database import get_session
-import pytest_asyncio
 
 
 DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/orders"
 
-Base = declarative_base()
+# TestClient runs the app on its own event loop, so connections must not be pooled
+# across loops, and each request gets its own session (as get_session does).
+engine = create_async_engine(DATABASE_URL, poolclass=NullPool)
 
-engine = create_async_engine(DATABASE_URL, echo=True)
-
-async_session = async_sessionmaker(engine)
-
-
-@pytest_asyncio.fixture()
-@pytest.mark.asyncio
-async def test_session():
-    async with async_session() as session:
-        yield session
+async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
-@pytest_asyncio.fixture()
-@pytest.mark.asyncio
-async def test_client(test_session):
+@pytest.fixture()
+def test_client():
     async def override_get_session():
-        try:
-            yield test_session
-        finally:
-            await test_session.close()
+        async with async_session() as session:
+            yield session
 
     app.dependency_overrides[get_session] = override_get_session
     yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -78,5 +68,14 @@ def mock_fetch_product_not_found():
     with patch(
         "app.client.product.ProductService.fetch_product",
         AsyncMock(side_effect=HTTPException(status_code=404, detail="Product service returned 404")),
+    ) as mocked:
+        yield mocked
+
+
+@pytest.fixture
+def mock_fetch_product_error():
+    with patch(
+        "app.client.product.ProductService.fetch_product",
+        AsyncMock(side_effect=RuntimeError("unexpected")),
     ) as mocked:
         yield mocked

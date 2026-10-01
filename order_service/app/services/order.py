@@ -49,7 +49,7 @@ async def create_order_record(
         user = await UserService.fetch_user(data.user_id)
         product = await ProductService.fetch_product(data.product_code)
 
-        if not user and product:
+        if not user or not product:
             return None
 
         total_price = product.price * data.quantity  # type: ignore[union-attr]

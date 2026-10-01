@@ -1,9 +1,11 @@
-import time
+import asyncio
 
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 
-app = FastAPI(title="Product Service")
+from app.telemetry import TELEMETRY
+
+app = FastAPI(title="Product Service", telemetry=TELEMETRY)
 
 
 class ProductResponse(BaseModel):
@@ -23,17 +25,17 @@ async def retrieve(code: str) -> ProductResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Please provide a product code")
 
     if code == "product1":
-        time.sleep(0.2)
+        await asyncio.sleep(0.2)
 
         return ProductResponse(code="product1", name="Product 1", price=9.99)
 
     elif code == "product2":
-        time.sleep(60)
+        await asyncio.sleep(60)
 
         return ProductResponse(code="product2", name="Product 2", price=14.99)
 
     elif code == "product3":
-        time.sleep(0.2)
+        await asyncio.sleep(0.2)
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
     else:

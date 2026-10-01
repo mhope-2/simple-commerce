@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_HOST: str
     DB_NAME: str
+    # Log every SQL statement (very noisy; queries are visible as spans in traces).
+    DB_ECHO: bool = False
 
     AMQP_URI: str
     RABBITMQ_HOST: str

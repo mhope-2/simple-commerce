@@ -1,0 +1,55 @@
+groups:
+  - name: simple-commerce
+    rules:
+      - alert: HighErrorRate
+        # More than 5% of a service's requests return 5xx.
+        expr: |
+          sum by (service_name) (rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m]))
+            / sum by (service_name) (rate(http_server_request_duration_seconds_count[5m]))
+            > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service_name }}: {{ $value | humanizePercentage }} of requests fail with 5xx"
+
+      - alert: HighLatency
+        # 95th percentile request duration above 1 second.
+        expr: |
+          histogram_quantile(0.95,
+            sum by (service_name, le) (rate(http_server_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service_name }}: p95 latency is {{ $value | humanizeDuration }}"
+
+      - alert: OrderMessagePublishFailures
+        # Orders were saved but their message never reached RabbitMQ (after retries).
+        expr: sum(increase(orders_messages_published_total{outcome="failure"}[5m])) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $value | humanize }} order messages failed to publish to RabbitMQ in the last 5 minutes"
+
+      - alert: HighOrderFailureRate
+        # More than 10% of order requests fail (any reason, including dependency errors).
+        expr: |
+          sum(rate(orders_failed_total[10m]))
+            / (sum(rate(orders_failed_total[10m])) + sum(rate(orders_created_total[10m])))
+            > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanizePercentage }} of order requests are failing"
+
+      - alert: CollectorDown
+        # Prometheus cannot scrape the OpenTelemetry Collector, so no service metrics arrive.
+        expr: up{job="otel-collector"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The OpenTelemetry Collector is down; no metrics are arriving from the services"

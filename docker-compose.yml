@@ -4,6 +4,9 @@ x-otel-env: &otel-env
   OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=local
   # Export metrics every 15s (the default is 60s) to match the Prometheus scrape interval.
   OTEL_METRIC_EXPORT_INTERVAL: "15000"
+  # Use the stable HTTP semantic conventions in the httpx instrumentation, so outgoing
+  # calls are recorded as http.client.request.duration (seconds).
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
 
 services:
   user-service:
@@ -153,6 +156,7 @@ services:
       - "9090:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
     networks:
       - comm-net
     depends_on:
@@ -169,6 +173,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
     networks:
       - comm-net
     depends_on:

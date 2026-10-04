@@ -16,11 +16,15 @@ SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project-id>
 docker-compose up order-service
 ```
 
-The SDK is initialised before the first request is served. Sentry is used for error tracking only; traces come from OpenTelemetry (see the main readme). Any unhandled exception — including failures in background tasks such as RabbitMQ publish retries — will appear in your Sentry dashboard within seconds.
+The SDK is initialised before the first request is served. Sentry is used for error tracking only; traces come from OpenTelemetry (see the main readme). Any unhandled exception — including failures in the outbox worker while publishing to RabbitMQ — will appear in your Sentry dashboard within seconds.
 
 #### Disabling Sentry
 
 Remove or comment out `SENTRY_DSN` in `.env`. The service will start without initialising the SDK.
+
+### Outbox Pattern
+
+When an order is created, the order and its RabbitMQ event are saved together in the database. The `outbox-worker` then reads pending events and publishes them to RabbitMQ. Events remain pending and are retried if publishing fails, so a successfully saved order is not lost when RabbitMQ is temporarily unavailable.
 
 ---
 

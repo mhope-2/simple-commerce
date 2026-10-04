@@ -1,8 +1,11 @@
 import pytest
+from sqlalchemy import func, select
+
+from app.models.outbox import OutboxEvent
 
 
 @pytest.mark.asyncio
-async def test_retrieve_order(test_client, mock_fetch_user, mock_fetch_product, mock_publish_message):
+async def test_retrieve_order(test_client, mock_fetch_user, mock_fetch_product):
     # Create an order first so we have a valid ID to retrieve
     create_res = test_client.post("/orders/", json={
         "user_id": "7c11e1ce2741",
@@ -65,8 +68,9 @@ async def test_create_order_product_not_found(test_client, mock_fetch_user, mock
 )
 @pytest.mark.asyncio
 async def test_create_order(
-    test_client, status_code, req_data, res_data, mock_fetch_user, mock_fetch_product, mock_publish_message
+    test_client, test_session, status_code, req_data, res_data, mock_fetch_user, mock_fetch_product
 ):
+    outbox_count_before = await test_session.scalar(select(func.count()).select_from(OutboxEvent))
     res = test_client.post(f"/orders/", json=req_data)
 
     assert res.status_code == status_code
@@ -80,9 +84,11 @@ async def test_create_order(
     else:
         assert res.json() == res_data
 
-    # Ensure the publish_message function was called
+    # The order and its event are committed together; RabbitMQ is handled by the
+    # separate outbox worker rather than by the request.
     if status_code == 200:
-        mock_publish_message.assert_called_once()
+        outbox_count_after = await test_session.scalar(select(func.count()).select_from(OutboxEvent))
+        assert outbox_count_after == outbox_count_before + 1
 
     # Ensure the fetch_user and fetch_product functions were called
     mock_fetch_user.assert_called_once_with(req_data["user_id"])

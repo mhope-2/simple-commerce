@@ -10,7 +10,7 @@ from alembic import context
 
 from app.config.settings import settings
 from app.config.database import Base
-from app.models import order  # noqa: F401 — registers Order model with Base.metadata
+from app.models import order, outbox  # noqa: F401 — registers models with Base.metadata
 
 config = context.config
 

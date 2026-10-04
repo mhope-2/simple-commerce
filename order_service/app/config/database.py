@@ -10,8 +10,9 @@ DATABASE_URL = f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASS}@{set
 
 engine = create_async_engine(DATABASE_URL, echo=settings.DB_ECHO)
 
-# Keep loaded attributes after commit: responses are serialized after the session's
-# transaction has ended, when lazy loading is no longer possible.
+# Keep ORM objects usable after a request transaction commits. This is especially
+# important for async FastAPI response serialization, which cannot perform an
+# implicit database query to reload expired attributes.
 session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 Base = declarative_base()

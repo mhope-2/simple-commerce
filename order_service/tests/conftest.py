@@ -1,9 +1,10 @@
 import pytest
+import pytest_asyncio
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import NullPool
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, AsyncMock
 
 from app.main import app
 from app.client.user import User
@@ -20,8 +21,14 @@ engine = create_async_engine(DATABASE_URL, poolclass=NullPool)
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
-@pytest.fixture()
-def test_client():
+@pytest_asyncio.fixture()
+async def test_session():
+    async with async_session() as session:
+        yield session
+
+
+@pytest_asyncio.fixture()
+async def test_client():
     async def override_get_session():
         async with async_session() as session:
             yield session
@@ -42,17 +49,16 @@ def mock_fetch_user():
 
 @pytest.fixture
 def mock_fetch_product():
+    async def fetch_product(code):
+        if code == "product3":
+            raise RuntimeError("Product service failed")
+        return Product(code="product1", name="Product 1", price=9.99)
+
     with patch(
-            "app.client.product.ProductService.fetch_product",
-            AsyncMock(return_value=Product(code="product1", name="Product 1", price=9.99))
+        "app.client.product.ProductService.fetch_product",
+        AsyncMock(side_effect=fetch_product),
     ) as mocked:
         yield mocked
-
-@pytest.fixture
-def mock_publish_message():
-    with patch("app.services.order.publish_message", MagicMock(return_value=None)) as mocked:
-        yield mocked
-
 
 @pytest.fixture
 def mock_fetch_user_not_found():

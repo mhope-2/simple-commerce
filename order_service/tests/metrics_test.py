@@ -6,7 +6,8 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 
 from app.schemas.order import OrderMessage, OrderMessagePayload, OrderPayload
-from app.services.order import publish_message
+from app.models.outbox import OutboxEvent
+from app.services.outbox import publish_event
 
 # The business metrics use the global meter provider; give this test run one we can read.
 reader = InMemoryMetricReader()
@@ -40,7 +41,7 @@ def message() -> OrderMessage:
     )
 
 
-def test_order_created_and_failed_counters(test_client, mock_fetch_user, mock_fetch_product, mock_publish_message):
+def test_order_created_and_failed_counters(test_client, mock_fetch_user, mock_fetch_product):
     before = counter_values("orders.created").get((("product.code", "product1"),), 0)
     res = test_client.post("/orders/", json={"user_id": "7c11e1ce2741", "product_code": "product1", "quantity": 1})
     assert res.status_code == 200
@@ -56,8 +57,9 @@ def test_order_failed_counter(test_client, mock_fetch_user_not_found):
 
 def test_publish_success_counter():
     before = counter_values("orders.messages.published").get((("outcome", "success"),), 0)
-    with patch("app.services.order._publish") as publish:
-        publish_message(message())
+    event = OutboxEvent(id="event-1", event_type="created_order", payload=message().model_dump(mode="json"))
+    with patch("app.services.outbox._publish_event") as publish:
+        publish_event(event)
     publish.assert_called_once()
     assert counter_values("orders.messages.published")[(("outcome", "success"),)] == before + 1
 
@@ -66,11 +68,12 @@ def test_publish_failure_and_retry_counters():
     failures = counter_values("orders.messages.published").get((("outcome", "failure"),), 0)
     retries = counter_values("orders.dependency.retries").get((("dependency", "rabbitmq"),), 0)
     with (
-        patch("app.services.order.Producer.publish", side_effect=ConnectionError("down")),
+        patch("app.services.outbox.Producer.publish", side_effect=ConnectionError("down")),
         patch("tenacity.nap.time.sleep"),
         pytest.raises(Exception),
     ):
-        publish_message(message())
+        event = OutboxEvent(id="event-2", event_type="created_order", payload=message().model_dump(mode="json"))
+        publish_event(event)
     assert counter_values("orders.messages.published")[(("outcome", "failure"),)] == failures + 1
     # Three attempts, so two retries.
     assert counter_values("orders.dependency.retries")[(("dependency", "rabbitmq"),)] == retries + 2

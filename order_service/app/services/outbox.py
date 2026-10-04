@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from tenacity import retry, stop_after_attempt, stop_after_delay, wait_fixed
+from tenacity import retry, stop_after_attempt, stop_after_delay, wait_random_exponential
 
 from app.config.metrics import MESSAGES_PUBLISHED, count_retry
 from app.config.settings import settings
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @retry(
     stop=(stop_after_attempt(3) | stop_after_delay(5)),
-    wait=wait_fixed(2),
+    wait=wait_random_exponential(multiplier=1, max=10),
     before_sleep=count_retry("rabbitmq"),
     reraise=True,
 )

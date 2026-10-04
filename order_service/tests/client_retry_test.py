@@ -11,7 +11,7 @@ from app.client.user import UserService
 
 @pytest.fixture(autouse=True)
 def no_retry_wait():
-    # Retry immediately in tests instead of waiting 2 seconds between attempts.
+    # Retry immediately in tests instead of waiting for the production backoff.
     with patch.object(UserService.fetch_user.retry, "wait", wait_none()), \
             patch.object(ProductService.fetch_product.retry, "wait", wait_none()):
         yield
